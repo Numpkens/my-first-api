@@ -22,7 +22,6 @@ class SongModel(db.Model):
     genre = db.Column(db.String(80), unique=False, nullable=False)
     # what to return when the class is used
     def __repr__(self):
-        # I have corrected the __ref__ typo to __repr__
         return f"Song(title = {self.title}, artist = {self.artist}, genre = {self.genre})"
 
 song_args = reqparse.RequestParser()
