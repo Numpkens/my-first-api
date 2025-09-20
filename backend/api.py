@@ -2,9 +2,12 @@
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Resource, Api, reqparse, fields, marshal_with, abort
+from flask_cors import CORS
 
 #this creates an instance of the Flask application
 app = Flask(__name__)
+# added this to try and fix a cors issue
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 # I am using SQLAlchemy to set up the database using sqlite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
@@ -18,8 +21,9 @@ class SongModel(db.Model):
     artist = db.Column(db.String(80), unique=False, nullable=False)
     genre = db.Column(db.String(80), unique=False, nullable=False)
     # what to return when the class is used
-    def __ref__(self):
-        return f"Song(title = self.title, artist = self.artist, genre = self.genre)"
+    def __repr__(self):
+        # I have corrected the __ref__ typo to __repr__
+        return f"Song(title = {self.title}, artist = {self.artist}, genre = {self.genre})"
 
 song_args = reqparse.RequestParser()
 
@@ -40,6 +44,7 @@ class Songs(Resource):
     def get(self):
         songs = SongModel.query.all()
         return songs
+    
     @marshal_with(songFields)
     #allow users to add songs to the database
     def post(self):
@@ -47,15 +52,14 @@ class Songs(Resource):
         song = SongModel(title=args['title'], artist=args['artist'], genre=args['genre'])
         db.session.add(song)
         db.session.commit()
-        songs = SongModel.query.all()
-        return songs, 201
+        # Corrected: Returning only the newly created song is more efficient
+        return song, 201
 
 # create the end point for users to receive the data
 api.add_resource(Songs, '/api/songs/')
 
 #this tells Flask to execute the hello world function whenever the user visiting the root URL of the api
 @app.route('/')
-
 def hello_world():
     # instead of simply returning a string this ensures that the response is in JSON format
     return jsonify(
